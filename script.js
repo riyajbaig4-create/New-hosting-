@@ -1,72 +1,66 @@
 /* ============================================================
-   HOSTX VIP — Main JavaScript
+   HOSTX VIP — MAIN JAVASCRIPT
+   Premium Hosting Platform
    ============================================================ */
 
 // ============================================================
-// LOADER
+// 1. PAGE LOADER
 // ============================================================
 (function() {
   function hideLoader() {
-    var el = document.getElementById('loader');
+    const el = document.getElementById('loader');
     if (el) el.classList.add('hidden');
   }
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(hideLoader, 200);
   } else {
-    document.addEventListener('DOMContentLoaded', function() { setTimeout(hideLoader, 200); });
+    document.addEventListener('DOMContentLoaded', () => setTimeout(hideLoader, 200));
   }
-  window.addEventListener('load', function() { setTimeout(hideLoader, 100); });
+  window.addEventListener('load', () => setTimeout(hideLoader, 100));
 })();
 
 // ============================================================
-// TOAST
+// 2. TOASTS
 // ============================================================
-function showToast(msg, type) {
-  type = type || 'info';
-  var container = document.getElementById('toasts');
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toasts');
   if (!container) return;
-  var t = document.createElement('div');
+  const t = document.createElement('div');
   t.className = 'toast toast-' + type;
   t.textContent = msg;
   container.appendChild(t);
-  setTimeout(function() {
+  setTimeout(() => {
     t.style.opacity = '0';
-    t.style.transform = 'translateX(20px)';
+    t.style.transform = 'translateX(30px)';
     t.style.transition = 'all 0.3s ease';
-    setTimeout(function() { t.remove(); }, 300);
-  }, 3200);
+    setTimeout(() => t.remove(), 300);
+  }, 4000);
 }
 
 // ============================================================
-// DROPDOWNS
+// 3. DROPDOWNS
 // ============================================================
 function toggleDropdown(event, btn) {
   if (event) event.stopPropagation();
-  var wrap = btn.closest('.dd-wrap');
-  var isOpen = wrap.classList.contains('open');
-  document.querySelectorAll('.dd-wrap.open').forEach(function(w) {
+  const wrap = btn.closest('.dd-wrap');
+  if (!wrap) return;
+  const isOpen = wrap.classList.contains('open');
+  document.querySelectorAll('.dd-wrap.open').forEach(w => {
     if (w !== wrap) w.classList.remove('open');
   });
-  if (isOpen) {
-    wrap.classList.remove('open');
-  } else {
-    wrap.classList.add('open');
-  }
+  wrap.classList.toggle('open', !isOpen);
 }
-
-document.addEventListener('click', function(e) {
+document.addEventListener('click', (e) => {
   if (!e.target.closest('.dd-wrap')) {
-    document.querySelectorAll('.dd-wrap.open').forEach(function(w) {
-      w.classList.remove('open');
-    });
+    document.querySelectorAll('.dd-wrap.open').forEach(w => w.classList.remove('open'));
   }
 });
 
 // ============================================================
-// PASSWORD TOGGLE
+// 4. PASSWORD TOGGLE
 // ============================================================
 function togglePass(inputId, btn) {
-  var input = document.getElementById(inputId);
+  const input = document.getElementById(inputId);
   if (!input) return;
   if (input.type === 'password') {
     input.type = 'text';
@@ -78,15 +72,15 @@ function togglePass(inputId, btn) {
 }
 
 // ============================================================
-// NOTIFICATIONS
+// 5. NOTIFICATIONS
 // ============================================================
 function loadNotifications() {
-  var list = document.getElementById('notif-list');
-  var badge = document.getElementById('notif-badge');
+  const list = document.getElementById('notif-list');
+  const badge = document.getElementById('notif-badge');
   if (!list) return;
   fetch('/api/notifications')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
       if (!data.success) return;
       if (badge) {
         if (data.unread_count > 0) {
@@ -100,162 +94,91 @@ function loadNotifications() {
         list.innerHTML = '<div class="empty-mini">No notifications yet.</div>';
         return;
       }
-      var html = '';
-      data.notifications.forEach(function(n) {
-        html += '<div class="notif-item ' + (n.is_read ? '' : 'unread') + '" onclick="deleteNotif(' + n.id + ', event)">' +
-          '<div class="notif-item-title"><b>' + escapeHtml(n.title) + '</b><span>' + n.created_at.split('.')[0] + '</span></div>' +
-          '<div class="notif-item-msg">' + escapeHtml(n.message) + '</div>' +
-          '</div>';
+      let html = '';
+      data.notifications.forEach(n => {
+        html += `<div class="notif-item ${n.is_read ? '' : 'unread'}" onclick="deleteNotif(${n.id}, event)">
+          <div class="notif-item-title"><b>${escapeHtml(n.title)}</b><span>${n.created_at.split('.')[0]}</span></div>
+          <div class="notif-item-msg">${escapeHtml(n.message)}</div>
+        </div>`;
       });
       list.innerHTML = html;
     })
-    .catch(function() {
+    .catch(() => {
       if (list) list.innerHTML = '<div class="empty-mini">Failed to load.</div>';
     });
 }
-
 function deleteNotif(id, event) {
   if (event) event.stopPropagation();
-  fetch('/api/notifications/' + id + '/delete', { method: 'POST' })
-    .then(function(r) { return r.json(); })
-    .then(function() { loadNotifications(); });
+  fetch(`/api/notifications/${id}/delete`, { method: 'POST' })
+    .then(r => r.json())
+    .then(() => loadNotifications());
 }
-
 function clearAllNotifs(event) {
   if (event) event.stopPropagation();
   fetch('/api/notifications/clear-all', { method: 'POST' })
-    .then(function(r) { return r.json(); })
-    .then(function() {
-      showToast('All notifications cleared.', 'success');
+    .then(r => r.json())
+    .then(() => {
+      showToast('All notifications cleared', 'success');
       loadNotifications();
     });
 }
-
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
-
-// Auto load notifications every 30s
 if (document.getElementById('notif-list')) {
   loadNotifications();
   setInterval(loadNotifications, 30000);
 }
 
 // ============================================================
-// GMAIL QUICK LOGIN MODAL
-// ============================================================
-function openGmailModal() {
-  var m = document.getElementById('gmail-modal');
-  if (m) {
-    m.style.display = 'flex';
-    var inp = document.getElementById('gmail-quick-email');
-    if (inp) setTimeout(function() { inp.focus(); }, 100);
-  }
-}
-
-function closeGmailModal() {
-  var m = document.getElementById('gmail-modal');
-  if (m) m.style.display = 'none';
-  var err = document.getElementById('gmail-quick-err');
-  if (err) err.style.display = 'none';
-}
-
-function submitGmailQuick() {
-  var email = (document.getElementById('gmail-quick-email') || {}).value || '';
-  var name = (document.getElementById('gmail-quick-name') || {}).value || '';
-  var err = document.getElementById('gmail-quick-err');
-  var btn = document.getElementById('gmail-quick-btn');
-
-  email = email.trim().toLowerCase();
-  name = name.trim();
-
-  if (!email || !email.endsWith('@gmail.com') || email === '@gmail.com') {
-    if (err) { err.textContent = 'Please enter a valid Gmail address.'; err.style.display = 'block'; }
-    return;
-  }
-
-  if (btn) { btn.disabled = true; btn.textContent = 'Please wait...'; }
-
-  fetch('/api/quick-gmail-login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, name: name })
-  })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.success) {
-        showToast(data.message || 'Success!', 'success');
-        setTimeout(function() { window.location.href = '/dashboard'; }, 700);
-      } else {
-        if (err) { err.textContent = data.message || 'Login failed.'; err.style.display = 'block'; }
-        if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
-      }
-    })
-    .catch(function() {
-      if (err) { err.textContent = 'Connection error. Try again.'; err.style.display = 'block'; }
-      if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
-    });
-}
-
-// ============================================================
-// FORGOT PASSWORD MODAL
+// 6. FORGOT PASSWORD MODAL
 // ============================================================
 function openForgotModal() {
-  var m = document.getElementById('forgot-modal');
+  const m = document.getElementById('forgot-modal');
   if (m) {
     m.style.display = 'flex';
     showFpStep(1);
     loadCaptcha();
   }
 }
-
 function closeForgotModal() {
-  var m = document.getElementById('forgot-modal');
+  const m = document.getElementById('forgot-modal');
   if (m) m.style.display = 'none';
 }
-
 function showFpStep(step) {
-  var s1 = document.getElementById('fp-step1');
-  var s2 = document.getElementById('fp-step2');
-  var s3 = document.getElementById('fp-step3');
-  if (s1) s1.style.display = step === 1 ? 'block' : 'none';
-  if (s2) s2.style.display = step === 2 ? 'block' : 'none';
-  if (s3) s3.style.display = step === 3 ? 'block' : 'none';
-
-  var b1 = document.getElementById('sb1');
-  var b2 = document.getElementById('sb2');
-  var b3 = document.getElementById('sb3');
-  if (b1) b1.className = 'stepb' + (step >= 1 ? ' active' : '') + (step > 1 ? ' done' : '');
-  if (b2) b2.className = 'stepb' + (step >= 2 ? ' active' : '') + (step > 2 ? ' done' : '');
-  if (b3) b3.className = 'stepb' + (step >= 3 ? ' active' : '');
+  ['fp-step1', 'fp-step2', 'fp-step3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (i + 1 === step) ? 'block' : 'none';
+  });
+  ['sb1', 'sb2', 'sb3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.className = 'stepb' + (i + 1 <= step ? ' active' : '') + (i + 1 < step ? ' done' : '');
+    }
+  });
 }
-
 function loadCaptcha() {
-  var box = document.getElementById('fp-captcha');
+  const box = document.getElementById('fp-captcha');
   if (!box) return;
   box.textContent = 'Loading...';
   fetch('/api/forgot-password/captcha')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
       box.textContent = data.question || 'Error';
-      var ans = document.getElementById('fp-captcha-answer');
+      const ans = document.getElementById('fp-captcha-answer');
       if (ans) ans.value = '';
     })
-    .catch(function() { box.textContent = 'Error loading'; });
+    .catch(() => { box.textContent = 'Error loading'; });
 }
-
 function fpSubmitCaptcha() {
-  var ans = (document.getElementById('fp-captcha-answer') || {}).value || '';
-  var err = document.getElementById('fp-cap-err');
+  const ans = (document.getElementById('fp-captcha-answer') || {}).value || '';
+  const err = document.getElementById('fp-cap-err');
   if (err) err.style.display = 'none';
   if (!ans) {
-    if (err) { err.textContent = 'Enter answer.'; err.style.display = 'block'; }
+    if (err) { err.textContent = 'Please enter the answer'; err.style.display = 'block'; }
     return;
   }
   fetch('/api/forgot-password/verify-captcha', {
@@ -263,25 +186,24 @@ function fpSubmitCaptcha() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ answer: ans })
   })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.success) { showFpStep(2); }
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) showFpStep(2);
       else {
-        if (err) { err.textContent = data.message || 'Incorrect.'; err.style.display = 'block'; }
+        if (err) { err.textContent = data.message || 'Incorrect answer'; err.style.display = 'block'; }
         loadCaptcha();
       }
     })
-    .catch(function() {
-      if (err) { err.textContent = 'Connection error.'; err.style.display = 'block'; }
+    .catch(() => {
+      if (err) { err.textContent = 'Connection error'; err.style.display = 'block'; }
     });
 }
-
 function fpSubmitEmail() {
-  var email = (document.getElementById('fp-email') || {}).value || '';
-  var err = document.getElementById('fp-email-err');
+  const email = (document.getElementById('fp-email') || {}).value || '';
+  const err = document.getElementById('fp-email-err');
   if (err) err.style.display = 'none';
   if (!email) {
-    if (err) { err.textContent = 'Enter email.'; err.style.display = 'block'; }
+    if (err) { err.textContent = 'Please enter your email'; err.style.display = 'block'; }
     return;
   }
   fetch('/api/forgot-password/verify-email', {
@@ -289,33 +211,32 @@ function fpSubmitEmail() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email.trim().toLowerCase() })
   })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.success) { showFpStep(3); }
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) showFpStep(3);
       else {
-        if (err) { err.textContent = data.message || 'Not registered.'; err.style.display = 'block'; }
+        if (err) { err.textContent = data.message || 'Email not registered'; err.style.display = 'block'; }
       }
     })
-    .catch(function() {
-      if (err) { err.textContent = 'Connection error.'; err.style.display = 'block'; }
+    .catch(() => {
+      if (err) { err.textContent = 'Connection error'; err.style.display = 'block'; }
     });
 }
-
 function fpSubmitReset() {
-  var pw = (document.getElementById('fp-new-pass') || {}).value || '';
-  var cp = (document.getElementById('fp-conf-pass') || {}).value || '';
-  var err = document.getElementById('fp-pw-err');
+  const pw = (document.getElementById('fp-new-pass') || {}).value || '';
+  const cp = (document.getElementById('fp-conf-pass') || {}).value || '';
+  const err = document.getElementById('fp-pw-err');
   if (err) err.style.display = 'none';
   if (!pw || !cp) {
-    if (err) { err.textContent = 'All fields required.'; err.style.display = 'block'; }
+    if (err) { err.textContent = 'Both fields required'; err.style.display = 'block'; }
     return;
   }
   if (pw !== cp) {
-    if (err) { err.textContent = 'Passwords do not match.'; err.style.display = 'block'; }
+    if (err) { err.textContent = 'Passwords do not match'; err.style.display = 'block'; }
     return;
   }
   if (pw.length < 6) {
-    if (err) { err.textContent = 'Min 6 characters.'; err.style.display = 'block'; }
+    if (err) { err.textContent = 'Minimum 6 characters'; err.style.display = 'block'; }
     return;
   }
   fetch('/api/forgot-password/reset', {
@@ -323,89 +244,57 @@ function fpSubmitReset() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: pw, confirm_password: cp })
   })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
-        showToast('Password updated! Please sign in.', 'success');
+        showToast('Password updated! Please sign in', 'success');
         closeForgotModal();
       } else {
-        if (err) { err.textContent = data.message || 'Error.'; err.style.display = 'block'; }
+        if (err) { err.textContent = data.message || 'Error'; err.style.display = 'block'; }
       }
     })
-    .catch(function() {
-      if (err) { err.textContent = 'Connection error.'; err.style.display = 'block'; }
+    .catch(() => {
+      if (err) { err.textContent = 'Connection error'; err.style.display = 'block'; }
     });
 }
 
 // ============================================================
-// DAILY COIN CLAIM
-// ============================================================
-function claimDaily() {
-  var btn = document.getElementById('claim-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Claiming...'; }
-  fetch('/api/coins/claim-daily', { method: 'POST' })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.success) {
-        showToast(data.message, 'success');
-        var bal = document.getElementById('coin-bal');
-        if (bal) bal.textContent = data.new_balance;
-        var headerCoins = document.querySelectorAll('.coin-pill b, .user-coin-val');
-        headerCoins.forEach(function(el) { el.textContent = data.new_balance; });
-        if (btn) {
-          btn.outerHTML = '<div class="claim-disabled">Next claim at 12:00 AM</div>';
-        }
-      } else {
-        showToast(data.message || 'Claim failed.', 'danger');
-        if (btn) { btn.disabled = false; btn.textContent = '🎁 Claim'; }
-      }
-    })
-    .catch(function() {
-      showToast('Connection error.', 'danger');
-      if (btn) { btn.disabled = false; btn.textContent = '🎁 Claim'; }
-    });
-}
-
-// ============================================================
-// SERVER ACTIONS (start/stop/restart)
+// 7. SERVER ACTIONS
 // ============================================================
 function serverAction(serverId, action) {
-  var btn = document.getElementById('btn-' + action);
-  var originalText = '';
+  const btn = document.getElementById('btn-' + action);
+  const originalText = btn ? btn.innerHTML : '';
   if (btn) {
-    originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '⏳ Please wait...';
   }
-
-  fetch('/api/servers/' + serverId + '/action', {
+  fetch(`/api/servers/${serverId}/action`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: action })
   })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
-        showToast(data.message || 'Success!', 'success');
+        showToast(data.message || 'Success', 'success');
         updateStatusBadge(data.status, data.pid);
         updatePidBadge(data.pid);
-        // Reload after short delay to reflect new state
-        setTimeout(function() { window.location.reload(); }, 900);
+        setTimeout(() => window.location.reload(), 1000);
       } else {
-        // Handle special errors
+        if (data.plan_required) {
+          showToast(data.message || 'Please purchase a plan', 'warning');
+          setTimeout(() => window.location.href = '/packages', 1200);
+          return;
+        }
         if (data.no_entry_file || data.redirect_url) {
-          var modal = document.getElementById('no-entry-modal');
-          if (modal) {
-            modal.style.display = 'flex';
-          } else if (data.redirect_url) {
-            showToast(data.message || 'Entry file missing.', 'warning');
-            setTimeout(function() { window.location.href = data.redirect_url; }, 1200);
-          }
+          const modal = document.getElementById('no-entry-modal');
+          if (modal) modal.style.display = 'flex';
+          else if (data.redirect_url) window.location.href = data.redirect_url;
         } else if (data.package_required && data.missing_packages) {
-          var names = data.missing_packages.map(function(p) { return p.name; }).join(', ');
-          showToast('Missing packages: ' + names + '. Install them first.', 'warning');
+          const names = data.missing_packages.map(p => p.name).join(', ');
+          showToast('Installing missing packages: ' + names, 'warning');
         } else {
-          showToast(data.message || 'Action failed.', 'danger');
+          showToast(data.message || 'Action failed', 'danger');
         }
         if (btn) {
           btn.disabled = false;
@@ -413,7 +302,7 @@ function serverAction(serverId, action) {
         }
       }
     })
-    .catch(function(err) {
+    .catch(err => {
       showToast('Network error: ' + err.message, 'danger');
       if (btn) {
         btn.disabled = false;
@@ -421,9 +310,8 @@ function serverAction(serverId, action) {
       }
     });
 }
-
 function updateStatusBadge(status, pid) {
-  var badge = document.getElementById('status-badge');
+  const badge = document.getElementById('status-badge');
   if (!badge) return;
   if (status === 'running') {
     badge.className = 'status status-running';
@@ -439,9 +327,8 @@ function updateStatusBadge(status, pid) {
     badge.innerHTML = '🔴 STOPPED';
   }
 }
-
 function updatePidBadge(pid) {
-  var badge = document.getElementById('pid-badge');
+  const badge = document.getElementById('pid-badge');
   if (!badge) return;
   if (pid && pid > 0) {
     badge.textContent = 'PID: ' + pid;
@@ -450,8 +337,8 @@ function updatePidBadge(pid) {
     badge.textContent = 'PID: Offline';
     badge.className = 'pid-badge';
   }
-  var dot = document.getElementById('status-dot');
-  var txt = document.getElementById('status-text');
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
   if (pid && pid > 0) {
     if (dot) dot.classList.add('on');
     if (txt) { txt.classList.add('on'); txt.textContent = 'Running'; }
@@ -462,47 +349,57 @@ function updatePidBadge(pid) {
 }
 
 // ============================================================
-// LIVE LOG STREAMING
+// 8. LIVE LOGS + URL CARD (Show after running)
 // ============================================================
-var logStreamInterval = null;
-
+let logStreamInterval = null;
 function startLogStream(serverId, startTime) {
-  var term = document.getElementById('terminal');
+  const term = document.getElementById('terminal');
   if (!term) return;
-  var tick = document.getElementById('uptime-tick');
+  const tick = document.getElementById('uptime-tick');
+  const urlCard = document.getElementById('url-card');
+  const urlInput = document.getElementById('server-url-input');
+  const openUrlBtn = document.getElementById('open-url-btn');
+  let urlShown = false;
 
   function fetchLogs() {
-    fetch('/api/servers/' + serverId + '/logs')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
+    fetch(`/api/servers/${serverId}/logs`)
+      .then(r => r.json())
+      .then(data => {
         // Update terminal
-        if (data.raw_logs) {
-          var lines = data.raw_logs.split('\n');
-          var html = '';
-          lines.slice(-200).forEach(function(line) {
-            if (!line.trim()) return;
-            var cls = 'log-info';
-            var lower = line.toLowerCase();
-            if (lower.includes('error') || lower.includes('traceback') || lower.includes('exception')) cls = 'log-error';
-            else if (lower.includes('warning') || lower.includes('warn')) cls = 'log-warning';
-            else if (lower.includes('success') || lower.includes('started') || lower.includes('running')) cls = 'log-success';
-            else if (lower.includes('stopping') || lower.includes('stopped')) cls = 'log-running';
-            html += '<div class="log-line ' + cls + '">' + escapeHtml(line) + '</div>';
-          });
-          term.innerHTML = html || '<div class="log-line log-info">[INFO] No logs yet. Start the server to see output.</div>';
+        if (data.raw_logs || data.db_logs) {
+          let html = '';
+          // DB logs (INFO, SUCCESS, ERROR messages)
+          if (data.db_logs && data.db_logs.length > 0) {
+            data.db_logs.forEach(log => {
+              const cls = log.level === 'ERROR' ? 'log-error' : (log.level === 'WARNING' ? 'log-warning' : (log.level === 'SUCCESS' ? 'log-success' : 'log-info'));
+              html += `<div class="log-line ${cls}">[${log.time.split('.')[0]}] [${log.level}] ${escapeHtml(log.message)}</div>`;
+            });
+          }
+          // Raw stdout/stderr from user's code
+          if (data.raw_logs) {
+            const lines = data.raw_logs.split('\n');
+            lines.slice(-200).forEach(line => {
+              if (!line.trim()) return;
+              let cls = 'log-info';
+              const lower = line.toLowerCase();
+              if (lower.includes('error') || lower.includes('traceback') || lower.includes('exception')) cls = 'log-error';
+              else if (lower.includes('warning') || lower.includes('warn')) cls = 'log-warning';
+              else if (lower.includes('success') || lower.includes('started') || lower.includes('running')) cls = 'log-success';
+              html += `<div class="log-line ${cls}">${escapeHtml(line)}</div>`;
+            });
+          }
+          term.innerHTML = html || '<div class="log-line log-info">[INFO] Waiting for output...</div>';
           term.scrollTop = term.scrollHeight;
         }
-
         // Update status
         updatePidBadge(data.pid);
         updateStatusBadge(data.status, data.pid);
-
         // Update uptime
         if (data.status === 'running' && data.start_time > 0) {
-          var secs = Math.floor(Date.now() / 1000 - data.start_time);
-          var h = Math.floor(secs / 3600);
-          var m = Math.floor((secs % 3600) / 60);
-          var s = secs % 60;
+          const secs = Math.floor(Date.now() / 1000 - data.start_time);
+          const h = Math.floor(secs / 3600);
+          const m = Math.floor((secs % 3600) / 60);
+          const s = secs % 60;
           if (tick) {
             tick.textContent = String(h).padStart(2, '0') + ':' +
               String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
@@ -510,399 +407,549 @@ function startLogStream(serverId, startTime) {
         } else {
           if (tick) tick.textContent = '00:00:00';
         }
+        // ⚡ URL card — SHOW only after server is running
+        if (data.status === 'running' && data.server_url && !urlShown) {
+          urlShown = true;
+          if (urlCard) urlCard.style.display = 'block';
+          if (urlInput) urlInput.value = data.server_url;
+          if (openUrlBtn) openUrlBtn.href = data.server_url;
+        }
       })
-      .catch(function() {});
+      .catch(() => {});
   }
-
   fetchLogs();
   if (logStreamInterval) clearInterval(logStreamInterval);
   logStreamInterval = setInterval(fetchLogs, 3000);
 }
-
 function clearLogs(serverId) {
   if (!confirm('Clear all logs for this server?')) return;
-  fetch('/api/servers/' + serverId + '/logs/clear', { method: 'POST' })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+  fetch(`/api/servers/${serverId}/logs/clear`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
-        showToast('Logs cleared.', 'success');
-        var term = document.getElementById('terminal');
+        showToast('Logs cleared', 'success');
+        const term = document.getElementById('terminal');
         if (term) term.innerHTML = '<div class="log-line log-info">[INFO] Logs cleared.</div>';
       } else {
-        showToast(data.message || 'Failed.', 'danger');
+        showToast(data.message || 'Failed', 'danger');
       }
     });
 }
+function copyServerUrl() {
+  const inp = document.getElementById('server-url-input');
+  if (!inp) return;
+  inp.select();
+  inp.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(inp.value).then(() => {
+    showToast('URL copied to clipboard!', 'success');
+  });
+}
 
 // ============================================================
-// RENEW SERVER
+// 9. INTERACTIVE TERMINAL
 // ============================================================
-function submitRenew(serverId, isExpired) {
-  var selector = isExpired ? 'input[name="renew_pkg_exp"]:checked' : 'input[name="renew_pkg"]:checked';
-  var selected = document.querySelector(selector);
-  if (!selected) {
-    showToast('Please select a package.', 'warning');
-    return;
-  }
-
-  var btn = document.querySelector('#renew-modal .btn-primary, .modal-card .btn-primary');
-  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
-
-  fetch('/api/servers/' + serverId + '/renew', {
+function quickCommand(cmd) {
+  const inp = document.getElementById('terminal-input');
+  if (inp) { inp.value = cmd; inp.focus(); }
+}
+function sendTerminalCommand() {
+  const input = document.getElementById('terminal-input');
+  if (!input || !input.value.trim()) return;
+  const cmd = input.value.trim();
+  input.value = '';
+  const term = document.getElementById('interactive-terminal');
+  if (!term) return;
+  term.innerHTML += `<div class="log-line log-info">$ ${escapeHtml(cmd)}</div>`;
+  term.scrollTop = term.scrollHeight;
+  const sid = term.dataset.serverId;
+  fetch(`/api/servers/${sid}/terminal`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ package_id: selected.value })
+    body: JSON.stringify({ command: cmd })
   })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
-        showToast(data.message || 'Renewed!', 'success');
-        setTimeout(function() { window.location.reload(); }, 900);
+        const lines = (data.output || '').split('\n');
+        lines.forEach(line => {
+          if (line.trim()) {
+            const cls = line.toLowerCase().includes('error') ? 'log-error' : 'log-success';
+            term.innerHTML += `<div class="log-line ${cls}">${escapeHtml(line)}</div>`;
+          }
+        });
       } else {
-        showToast(data.message || 'Renewal failed.', 'danger');
-        if (btn) { btn.disabled = false; btn.textContent = 'Confirm Extension'; }
+        term.innerHTML += `<div class="log-line log-error">Error: ${escapeHtml(data.message)}</div>`;
+      }
+      term.scrollTop = term.scrollHeight;
+    })
+    .catch(() => {
+      term.innerHTML += '<div class="log-line log-error">Network error</div>';
+    });
+}
+function clearTerminal() {
+  const term = document.getElementById('interactive-terminal');
+  if (term) term.innerHTML = '<div class="log-line log-info">[INFO] Terminal cleared.</div>';
+}
+
+// ============================================================
+// 10. DELETE SERVER (with confirmation)
+// ============================================================
+function deleteServer(serverId, serverName) {
+  if (!confirm(`Delete "${serverName}" and ALL its files?\n\nThis cannot be undone.`)) return;
+  fetch(`/api/servers/${serverId}/delete`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('Server deleted', 'success');
+        setTimeout(() => window.location.href = '/dashboard', 1200);
+      } else {
+        showToast(data.message || 'Delete failed', 'danger');
       }
     })
-    .catch(function() {
-      showToast('Network error.', 'danger');
-      if (btn) { btn.disabled = false; btn.textContent = 'Confirm Extension'; }
+    .catch(() => showToast('Network error', 'danger'));
+}
+
+// ============================================================
+// 11. RENEW MODAL
+// ============================================================
+function openRenewModal() {
+  const m = document.getElementById('renew-modal');
+  if (m) {
+    m.style.display = 'flex';
+    updateRenewButton();
+  }
+}
+function closeRenewModal() {
+  const m = document.getElementById('renew-modal');
+  if (m) m.style.display = 'none';
+}
+function updateRenewButton() {
+  const selected = document.querySelector('input[name="renew_pkg"]:checked');
+  const btn = document.getElementById('renew-continue-btn');
+  if (!selected || !btn) return;
+  const price = selected.closest('.renew-plan-option')?.querySelector('.renew-price')?.textContent?.trim() || '';
+  btn.innerHTML = `Continue → ${price}`;
+}
+function continueRenew() {
+  const selected = document.querySelector('input[name="renew_pkg"]:checked');
+  if (selected) {
+    window.location.href = `/checkout/${selected.value}`;
+  } else {
+    showToast('Please select a plan', 'warning');
+  }
+}
+
+// ============================================================
+// 12. PAYMENT / CHECKOUT
+// ============================================================
+function copyUpiId() {
+  const el = document.getElementById('upi-id-display');
+  if (!el) return;
+  const text = el.dataset.upi || el.textContent.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('UPI ID copied', 'success');
+  }).catch(() => {
+    const range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    showToast('UPI ID copied', 'success');
+  });
+}
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied!', 'success');
+  });
+}
+function selectPayMethod(el) {
+  document.querySelectorAll('.pay-method-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input[type="radio"]').checked = true;
+}
+
+// Open UPI app via deep link
+function openUpiApp(app) {
+  const upi = document.getElementById('upi-id-display')?.dataset.upi || '';
+  const amount = document.getElementById('qr-amount')?.dataset.amount || '0';
+  const orderId = document.getElementById('payment-poll-order')?.dataset.orderId || '';
+  if (!upi) return;
+
+  const urls = {
+    phonepe: `phonepe://pay?pa=${encodeURIComponent(upi)}&pn=HostX&am=${amount}&cu=INR&tn=Order${orderId}`,
+    gpay: `tez://upi/pay?pa=${encodeURIComponent(upi)}&pn=HostX&am=${amount}&cu=INR&tn=Order${orderId}`,
+    paytm: `paytmmp://pay?pa=${encodeURIComponent(upi)}&pn=HostX&am=${amount}&cu=INR&tn=Order${orderId}`,
+    fampay: `fam://pay?pa=${encodeURIComponent(upi)}&pn=HostX&am=${amount}&cu=INR&tn=Order${orderId}`,
+    bhim: `upi://pay?pa=${encodeURIComponent(upi)}&pn=HostX&am=${amount}&cu=INR&tn=Order${orderId}`,
+    amazonpay: `amazonpay://pay?pa=${encodeURIComponent(upi)}&pn=HostX&am=${amount}&cu=INR&tn=Order${orderId}`
+  };
+  const url = urls[app];
+  if (url) {
+    // Try deep link
+    window.location.href = url;
+    // Fallback to generic UPI
+    setTimeout(() => {
+      window.location.href = `upi://pay?pa=${encodeURIComponent(upi)}&pn=HostX&am=${amount}&cu=INR&tn=Order${orderId}`;
+    }, 800);
+  }
+}
+
+// Payment polling
+let paymentPollInterval = null;
+function startPaymentPoll(orderId) {
+  if (!orderId) return;
+  const statusEl = document.getElementById('payment-status-text');
+  const statusSub = document.getElementById('payment-status-sub');
+  let attempts = 0;
+  const maxAttempts = 200;
+  paymentPollInterval = setInterval(() => {
+    attempts++;
+    if (attempts > maxAttempts) {
+      clearInterval(paymentPollInterval);
+      if (statusEl) statusEl.textContent = '⏰ Payment timeout';
+      if (statusSub) statusSub.textContent = 'Please contact support if amount was deducted';
+      return;
+    }
+    fetch(`/api/payment/check/${orderId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.status === 'paid') {
+          clearInterval(paymentPollInterval);
+          if (statusEl) statusEl.textContent = '✅ Payment Successful!';
+          if (statusSub) statusSub.textContent = 'Redirecting to dashboard...';
+          showToast('Payment successful!', 'success');
+          setTimeout(() => window.location.href = data.redirect || '/dashboard', 1500);
+        }
+      })
+      .catch(() => {});
+  }, 3000);
+}
+
+// Manual transaction ID submit
+function submitTransactionId(orderId) {
+  const inp = document.getElementById('txn-id-input');
+  if (!inp || !inp.value.trim()) {
+    showToast('Please enter transaction ID', 'warning');
+    return;
+  }
+  const btn = document.getElementById('txn-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  fetch(`/api/payment/manual/${orderId}/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transaction_id: inp.value.trim() })
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('Thank you! Payment is being processed', 'success');
+        const form = document.getElementById('txn-form');
+        const done = document.getElementById('txn-done');
+        if (form) form.style.display = 'none';
+        if (done) done.style.display = 'block';
+        setTimeout(() => window.location.href = '/dashboard', 3000);
+      } else {
+        showToast(data.message || 'Submit failed', 'danger');
+        if (btn) { btn.disabled = false; btn.textContent = 'Submit Transaction ID'; }
+      }
+    })
+    .catch(() => {
+      showToast('Network error', 'danger');
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit Transaction ID'; }
     });
 }
 
 // ============================================================
-// FILE MANAGER
+// 13. FILE MANAGER
 // ============================================================
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return '0 B';
-  var k = 1024;
-  var sizes = ['B', 'KB', 'MB', 'GB'];
-  var i = Math.floor(Math.log(bytes) / Math.log(k));
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
-
 function uploadFile(serverId, input, isZip) {
   if (!input.files || input.files.length === 0) return;
-
-  var files = input.files;
-  var fd = new FormData();
-  fd.append('path', window.location.search ? new URLSearchParams(window.location.search).get('path') || '' : '');
-  for (var i = 0; i < files.length; i++) {
+  const files = input.files;
+  const fd = new FormData();
+  const urlParams = new URLSearchParams(window.location.search);
+  fd.append('path', urlParams.get('path') || '');
+  for (let i = 0; i < files.length; i++) {
     fd.append('files', files[i]);
   }
-
-  // Show modal
-  var modal = document.getElementById('up-modal');
-  var title = document.getElementById('up-title');
-  var icon = document.getElementById('up-icon');
-  var sub = document.getElementById('up-sub');
-  var bar = document.getElementById('up-bar');
-  var pct = document.getElementById('up-pct');
-  var size = document.getElementById('up-size');
-
+  const modal = document.getElementById('up-modal');
+  const title = document.getElementById('up-title');
+  const icon = document.getElementById('up-icon');
+  const sub = document.getElementById('up-sub');
+  const bar = document.getElementById('up-bar');
+  const pct = document.getElementById('up-pct');
+  const size = document.getElementById('up-size');
   if (modal) modal.style.display = 'flex';
   if (title) title.textContent = isZip ? 'Uploading & Extracting ZIP...' : 'Uploading Files...';
   if (icon) icon.textContent = isZip ? '📦' : '📤';
-  if (sub) sub.textContent = 'Please wait.';
+  if (sub) sub.textContent = 'Please wait';
   if (bar) bar.style.width = '0%';
-  if (pct) pct.textContent = '0%';
-  if (size) size.textContent = '0 B / 0 B';
 
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/servers/' + serverId + '/files/upload', true);
-
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', `/api/servers/${serverId}/files/upload`, true);
   xhr.upload.onprogress = function(e) {
     if (e.lengthComputable) {
-      var percent = Math.round((e.loaded / e.total) * 100);
+      const percent = Math.round((e.loaded / e.total) * 100);
       if (bar) bar.style.width = percent + '%';
       if (pct) pct.textContent = percent + '%';
       if (size) size.textContent = formatBytes(e.loaded) + ' / ' + formatBytes(e.total);
       if (sub && percent >= 100) sub.textContent = 'Processing on server...';
     }
   };
-
   xhr.onload = function() {
     if (modal) modal.style.display = 'none';
     try {
-      var data = JSON.parse(xhr.responseText);
+      const data = JSON.parse(xhr.responseText);
       if (data.success) {
         showToast(data.message || 'Uploaded!', 'success');
-        setTimeout(function() { window.location.reload(); }, 700);
+        setTimeout(() => window.location.reload(), 700);
       } else {
-        showToast(data.message || 'Upload failed.', 'danger');
+        showToast(data.message || 'Upload failed', 'danger');
       }
-    } catch (err) {
-      showToast('Invalid server response.', 'danger');
+    } catch {
+      showToast('Invalid server response', 'danger');
     }
     input.value = '';
   };
-
   xhr.onerror = function() {
     if (modal) modal.style.display = 'none';
-    showToast('Network error during upload.', 'danger');
+    showToast('Network error during upload', 'danger');
     input.value = '';
   };
-
   xhr.send(fd);
 }
-
 function promptFolder(serverId) {
-  var name = prompt('New folder name:');
+  const name = prompt('Enter folder name:');
   if (!name) return;
-  var fd = new FormData();
-  fd.append('path', window.location.search ? new URLSearchParams(window.location.search).get('path') || '' : '');
+  const fd = new FormData();
+  const urlParams = new URLSearchParams(window.location.search);
+  fd.append('path', urlParams.get('path') || '');
   fd.append('folder_name', name);
-  fetch('/api/servers/' + serverId + '/files/create-folder', { method: 'POST', body: fd })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+  fetch(`/api/servers/${serverId}/files/create-folder`, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
         showToast(data.message, 'success');
-        setTimeout(function() { window.location.reload(); }, 600);
-      } else {
-        showToast(data.message, 'danger');
-      }
+        setTimeout(() => window.location.reload(), 600);
+      } else showToast(data.message, 'danger');
     });
 }
-
 function promptFile(serverId) {
-  var name = prompt('New file name (e.g. config.py):');
+  const name = prompt('Enter file name (e.g. config.py):');
   if (!name) return;
-  var fd = new FormData();
-  fd.append('path', window.location.search ? new URLSearchParams(window.location.search).get('path') || '' : '');
+  const fd = new FormData();
+  const urlParams = new URLSearchParams(window.location.search);
+  fd.append('path', urlParams.get('path') || '');
   fd.append('file_name', name);
-  fetch('/api/servers/' + serverId + '/files/create-file', { method: 'POST', body: fd })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+  fetch(`/api/servers/${serverId}/files/create-file`, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
         showToast(data.message, 'success');
-        setTimeout(function() { window.location.reload(); }, 600);
-      } else {
-        showToast(data.message, 'danger');
-      }
+        setTimeout(() => window.location.reload(), 600);
+      } else showToast(data.message, 'danger');
     });
 }
-
 function openEditor(serverId, path) {
-  var modal = document.getElementById('editor-modal');
-  var nameEl = document.getElementById('ed-file');
-  var pathEl = document.getElementById('ed-path');
-  var contentEl = document.getElementById('ed-content');
+  const modal = document.getElementById('editor-modal');
+  const nameEl = document.getElementById('ed-file');
+  const pathEl = document.getElementById('ed-path');
+  const contentEl = document.getElementById('ed-content');
   if (!modal) return;
-
   if (nameEl) nameEl.textContent = path.split('/').pop();
   if (pathEl) pathEl.value = path;
   if (contentEl) contentEl.value = 'Loading...';
-
   modal.style.display = 'flex';
-
-  fetch('/api/servers/' + serverId + '/files/read?path=' + encodeURIComponent(path))
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+  fetch(`/api/servers/${serverId}/files/read?path=${encodeURIComponent(path)}`)
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
         if (contentEl) contentEl.value = data.content || '';
       } else {
-        if (contentEl) contentEl.value = '// Error: ' + (data.message || 'Could not load.');
+        if (contentEl) contentEl.value = '// Error: ' + (data.message || 'Could not load');
       }
     })
-    .catch(function() {
-      if (contentEl) contentEl.value = '// Failed to load file.';
+    .catch(() => {
+      if (contentEl) contentEl.value = '// Failed to load file';
     });
 }
-
 function saveEditor(serverId) {
-  var pathEl = document.getElementById('ed-path');
-  var contentEl = document.getElementById('ed-content');
-  var btn = document.getElementById('ed-save');
+  const pathEl = document.getElementById('ed-path');
+  const contentEl = document.getElementById('ed-content');
+  const btn = document.getElementById('ed-save');
   if (!pathEl || !contentEl) return;
-
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
-
-  fetch('/api/servers/' + serverId + '/files/save', {
+  fetch(`/api/servers/${serverId}/files/save`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path: pathEl.value, content: contentEl.value })
   })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
-        showToast('File saved!', 'success');
-        var m = document.getElementById('editor-modal');
+        showToast('File saved', 'success');
+        const m = document.getElementById('editor-modal');
         if (m) m.style.display = 'none';
       } else {
-        showToast(data.message || 'Save failed.', 'danger');
+        showToast(data.message || 'Save failed', 'danger');
       }
       if (btn) { btn.disabled = false; btn.textContent = '💾 Save'; }
     })
-    .catch(function() {
-      showToast('Network error.', 'danger');
+    .catch(() => {
+      showToast('Network error', 'danger');
       if (btn) { btn.disabled = false; btn.textContent = '💾 Save'; }
     });
 }
-
 function deleteItem(serverId, path) {
-  if (!confirm('Delete "' + path + '"? This cannot be undone.')) return;
-  fetch('/api/servers/' + serverId + '/files/delete', {
+  if (!confirm(`Delete "${path}"?\n\nThis cannot be undone.`)) return;
+  fetch(`/api/servers/${serverId}/files/delete`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: path })
+    body: JSON.stringify({ path })
   })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
-        showToast('Deleted.', 'success');
-        setTimeout(function() { window.location.reload(); }, 600);
-      } else {
-        showToast(data.message, 'danger');
-      }
+        showToast('Deleted', 'success');
+        setTimeout(() => window.location.reload(), 600);
+      } else showToast(data.message, 'danger');
     });
 }
-
 function renameItem(serverId, path) {
-  var oldName = path.split('/').pop();
-  var newName = prompt('Rename "' + oldName + '" to:', oldName);
+  const oldName = path.split('/').pop();
+  const newName = prompt(`Rename "${oldName}" to:`, oldName);
   if (!newName || newName === oldName) return;
-  fetch('/api/servers/' + serverId + '/files/rename', {
+  fetch(`/api/servers/${serverId}/files/rename`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ old_path: path, new_name: newName })
   })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
         showToast(data.message, 'success');
-        setTimeout(function() { window.location.reload(); }, 600);
-      } else {
-        showToast(data.message, 'danger');
-      }
+        setTimeout(() => window.location.reload(), 600);
+      } else showToast(data.message, 'danger');
     });
 }
-
 function unzipItem(serverId, path) {
-  if (!confirm('Extract "' + path + '"?')) return;
-  fetch('/api/servers/' + serverId + '/files/unzip', {
+  if (!confirm(`Extract "${path}"?`)) return;
+  fetch(`/api/servers/${serverId}/files/unzip`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: path })
+    body: JSON.stringify({ path })
   })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
-        showToast(data.message || 'Extracted!', 'success');
-        setTimeout(function() { window.location.reload(); }, 900);
-      } else {
-        showToast(data.message, 'danger');
-      }
+        showToast(data.message || 'Extracted', 'success');
+        setTimeout(() => window.location.reload(), 900);
+      } else showToast(data.message, 'danger');
     });
 }
 
 // ============================================================
-// AVATAR PREVIEW (Account page)
+// 14. ADMIN — USER EDIT
 // ============================================================
+function openEditUser(id, name, username, email, bio, projectLimit, role, status, perms, isSuper) {
+  const modal = document.getElementById('edit-user-modal');
+  if (!modal) return;
+  const form = document.getElementById('edit-user-form');
+  if (form) form.action = `/admin/users/${id}/update`;
+  const nameEl = document.getElementById('eu_name'); if (nameEl) nameEl.value = name;
+  const userEl = document.getElementById('eu_user'); if (userEl) userEl.value = username;
+  const emailEl = document.getElementById('eu_email'); if (emailEl) emailEl.value = email;
+  const bioEl = document.getElementById('eu_bio'); if (bioEl) bioEl.value = bio || '';
+  const limEl = document.getElementById('eu_limit'); if (limEl) limEl.value = projectLimit;
+  const passEl = document.getElementById('eu_pass'); if (passEl) passEl.value = '';
+  const roleEl = document.getElementById('eu_role');
+  if (roleEl) {
+    roleEl.value = isSuper ? 'super_admin' : role;
+    togglePermBlock(roleEl.value);
+  }
+  const statusEl = document.getElementById('eu_status'); if (statusEl) statusEl.value = status;
+  if (perms) {
+    const list = perms === 'all' ? ['manage_users','manage_payments','manage_files','manage_settings','manage_announcements','manage_broadcasts','manage_orders','view_logs'] : perms.split(',');
+    ['manage_users','manage_payments','manage_files','manage_settings','manage_announcements','manage_broadcasts','manage_orders','view_logs'].forEach(p => {
+      const el = document.getElementById('p_' + p.replace('manage_', '').replace('view_', ''));
+      if (el) el.checked = list.indexOf(p) !== -1;
+    });
+  }
+  modal.style.display = 'flex';
+}
+function togglePermBlock(roleVal) {
+  const block = document.getElementById('perm-block');
+  if (block) block.style.display = (roleVal === 'admin') ? 'block' : 'none';
+}
+function closeEditUser() {
+  const m = document.getElementById('edit-user-modal');
+  if (m) m.style.display = 'none';
+}
+
+// ============================================================
+// 15. ADMIN — LOGO PREVIEW
+// ============================================================
+function previewLogo(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = document.getElementById('logo-preview');
+    if (img) { img.src = e.target.result; img.style.display = 'block'; }
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function handleLogoPreview(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const mainPreview = document.getElementById('admin_logo_preview');
+    const navPreview = document.getElementById('admin_logo_nav_preview');
+    if (mainPreview) mainPreview.src = e.target.result;
+    if (navPreview) navPreview.src = e.target.result;
+    const fileInfo = document.getElementById('admin_logo_filename');
+    if (fileInfo) {
+      fileInfo.textContent = 'Selected: ' + input.files[0].name;
+      fileInfo.style.color = '#7C3AED';
+    }
+  };
+  reader.readAsDataURL(input.files[0]);
+}
 function previewAvatar(input) {
   if (!input.files || !input.files[0]) return;
-  var reader = new FileReader();
+  const reader = new FileReader();
   reader.onload = function(e) {
-    var img = document.getElementById('av-preview-img');
-    var letter = document.getElementById('av-preview-letter');
-    if (img) {
-      img.src = e.target.result;
-      img.style.display = 'block';
-    }
+    const img = document.getElementById('av-preview-img');
+    const letter = document.getElementById('av-preview-letter');
+    if (img) { img.src = e.target.result; img.style.display = 'block'; }
     if (letter) letter.style.display = 'none';
-    var fi = document.querySelector('.file-info');
+    const fi = document.querySelector('.file-info');
     if (fi) fi.textContent = 'Selected: ' + input.files[0].name;
   };
   reader.readAsDataURL(input.files[0]);
 }
 
 // ============================================================
-// ADMIN — EDIT USER MODAL
+// 16. ADMIN — TOGGLE NEW PACKAGE
 // ============================================================
-function openEditUser(id, name, username, email, bio, coins, role, status, perms, isSuper) {
-  var modal = document.getElementById('edit-user-modal');
-  if (!modal) return;
-
-  var form = document.getElementById('edit-user-form');
-  if (form) form.action = '/admin/users/' + id + '/update';
-
-  var nameEl = document.getElementById('eu_name'); if (nameEl) nameEl.value = name;
-  var userEl = document.getElementById('eu_user'); if (userEl) userEl.value = username;
-  var emailEl = document.getElementById('eu_email'); if (emailEl) emailEl.value = email;
-  var bioEl = document.getElementById('eu_bio'); if (bioEl) bioEl.value = bio || '';
-  var coinsEl = document.getElementById('eu_coins'); if (coinsEl) coinsEl.value = coins;
-  var passEl = document.getElementById('eu_pass'); if (passEl) passEl.value = '';
-
-  var roleEl = document.getElementById('eu_role');
-  if (roleEl) {
-    roleEl.value = isSuper ? 'super_admin' : role;
-    togglePermBlock(roleEl.value);
-  }
-
-  var statusEl = document.getElementById('eu_status');
-  if (statusEl) statusEl.value = status;
-
-  // Permissions checkboxes
-  if (perms) {
-    var list = perms === 'all' ? ['manage_users','manage_coins','manage_files','manage_settings','manage_announcements','manage_broadcasts','view_logs'] : perms.split(',');
-    ['manage_users','manage_coins','manage_files','manage_settings','manage_announcements','manage_broadcasts','view_logs'].forEach(function(p) {
-      var el = document.getElementById('p_' + p.replace('manage_', '').replace('view_', ''));
-      if (el) el.checked = list.indexOf(p) !== -1;
-    });
-  }
-
-  modal.style.display = 'flex';
-}
-
-function togglePermBlock(roleVal) {
-  var block = document.getElementById('perm-block');
-  if (block) {
-    block.style.display = (roleVal === 'admin') ? 'block' : 'none';
-  }
-}
-
-function closeEditUser() {
-  var m = document.getElementById('edit-user-modal');
-  if (m) m.style.display = 'none';
+function toggleNewPkg() {
+  const box = document.getElementById('new-pkg-form');
+  if (!box) return;
+  box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
 }
 
 // ============================================================
-// ADMIN — PREVIEW FILE
-// ============================================================
-function adminPreview(serverId, filename, serverName) {
-  var modal = document.getElementById('admin-preview-modal');
-  var nameEl = document.getElementById('ap-file');
-  var subEl = document.getElementById('ap-sub');
-  var contentEl = document.getElementById('ap-content');
-  var dlEl = document.getElementById('ap-dl');
-  if (!modal) return;
-
-  if (nameEl) nameEl.textContent = filename;
-  if (subEl) subEl.textContent = 'Server: ' + serverName + ' (# ' + serverId + ')';
-  if (contentEl) contentEl.textContent = 'Loading...';
-  if (dlEl) dlEl.href = '/admin/servers/' + serverId + '/files/download?path=' + encodeURIComponent(filename);
-
-  modal.style.display = 'flex';
-
-  fetch('/admin/api/servers/' + serverId + '/files/read?path=' + encodeURIComponent(filename))
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.success) {
-        if (contentEl) contentEl.textContent = data.content || '';
-      } else {
-        if (contentEl) contentEl.textContent = 'Error: ' + (data.message || 'Could not load.');
-      }
-    })
-    .catch(function() {
-      if (contentEl) contentEl.textContent = 'Failed to load. Use direct download.';
-    });
-}
-
-// ============================================================
-// ADMIN — BROADCAST TARGET
+// 17. ADMIN — BROADCAST TARGET
 // ============================================================
 function pickTarget(type) {
-  var box = document.getElementById('specific-user');
-  var allBox = document.getElementById('t-all');
-  var specBox = document.getElementById('t-spec');
+  const box = document.getElementById('specific-user');
+  const allBox = document.getElementById('t-all');
+  const specBox = document.getElementById('t-spec');
   if (!box) return;
   if (type === 'specific') {
     box.style.display = 'block';
@@ -916,52 +963,155 @@ function pickTarget(type) {
 }
 
 // ============================================================
-// ADMIN — LOGO PREVIEW
+// 18. ADMIN — PAYMENT SETTINGS
 // ============================================================
-function previewLogo(input) {
-  if (!input.files || !input.files[0]) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var img = document.getElementById('logo-preview');
-    if (img) {
-      img.src = e.target.result;
-      img.style.display = 'block';
+function detectUpiApp(upiId) {
+  if (!upiId) return null;
+  const lower = upiId.toLowerCase();
+  if (lower.includes('@fam')) return 'fampay';
+  if (lower.includes('@ybl') || lower.includes('@ibl') || lower.includes('@axl')) return 'phonepe';
+  if (lower.includes('@okaxis') || lower.includes('@oksbi') || lower.includes('@okicici') || lower.includes('@okhdfcbank')) return 'gpay';
+  if (lower.includes('@paytm') || lower.includes('@ptaxis') || lower.includes('@ptyes')) return 'paytm';
+  if (lower.includes('@apl')) return 'amazonpay';
+  if (lower.includes('@upi')) return 'bhim';
+  return 'other';
+}
+function onUpiInput(input, appKey) {
+  const app = detectUpiApp(input.value);
+  const infoEl = document.getElementById('detected_' + appKey);
+  if (infoEl) {
+    if (app) {
+      infoEl.textContent = '✓ Detected: ' + app.charAt(0).toUpperCase() + app.slice(1);
+      infoEl.style.color = '#10B981';
+    } else {
+      infoEl.textContent = '';
     }
-  };
-  reader.readAsDataURL(input.files[0]);
+  }
 }
 
 // ============================================================
-// ADMIN — NEW PACKAGE TOGGLE
+// 19. TRIAL COUNTDOWN
 // ============================================================
-function toggleNewPkg() {
-  var box = document.getElementById('new-pkg-form');
-  if (!box) return;
-  box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+function startTrialCountdown(expiresAt) {
+  const el = document.getElementById('trial-timer');
+  if (!el || !expiresAt) return;
+  const target = new Date(expiresAt.replace(' ', 'T') + 'Z').getTime();
+  function tick() {
+    const now = Date.now();
+    const diff = target - now;
+    if (diff <= 0) {
+      el.textContent = '00:00:00';
+      el.classList.add('expired');
+      return;
+    }
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    el.textContent = String(h).padStart(2, '0') + ':' +
+                     String(m).padStart(2, '0') + ':' +
+                     String(s).padStart(2, '0');
+  }
+  tick();
+  setInterval(tick, 1000);
 }
 
 // ============================================================
-// KEYBOARD SHORTCUTS
+// 20. KEYBOARD SHORTCUTS
 // ============================================================
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay').forEach(function(m) {
+    document.querySelectorAll('.modal-overlay').forEach(m => {
       if (m.style.display === 'flex') m.style.display = 'none';
     });
-    document.querySelectorAll('.dd-wrap.open').forEach(function(w) {
-      w.classList.remove('open');
-    });
+    document.querySelectorAll('.dd-wrap.open').forEach(w => w.classList.remove('open'));
   }
 });
 
 // ============================================================
-// AUTO-DISMISS FLASH MESSAGES
+// 21. FLASH AUTO-DISMISS
 // ============================================================
-setTimeout(function() {
-  document.querySelectorAll('.flash').forEach(function(f) {
+setTimeout(() => {
+  document.querySelectorAll('.flash').forEach(f => {
     f.style.transition = 'all 0.4s ease';
     f.style.opacity = '0';
     f.style.transform = 'translateY(-10px)';
-    setTimeout(function() { f.remove(); }, 400);
+    setTimeout(() => f.remove(), 400);
   });
 }, 5000);
+
+// ============================================================
+// 22. INIT ON PAGE LOAD
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Trial countdown
+  const trialEl = document.getElementById('trial-timer');
+  if (trialEl && trialEl.dataset.expires) {
+    startTrialCountdown(trialEl.dataset.expires);
+  }
+  // Payment poll — but wait for a bit to let user see the QR
+  const payPollEl = document.getElementById('payment-poll-order');
+  if (payPollEl && payPollEl.dataset.orderId) {
+    // Start polling after 5 seconds (user has time to see QR)
+    setTimeout(() => startPaymentPoll(payPollEl.dataset.orderId), 5000);
+  }
+  // Notification poll
+  if (document.getElementById('notif-list')) {
+    loadNotifications();
+    setInterval(loadNotifications, 30000);
+  }
+  // Live log stream
+  const terminal = document.getElementById('terminal');
+  if (terminal && terminal.dataset.serverId) {
+    startLogStream(terminal.dataset.serverId, terminal.dataset.startTime || 0);
+  }
+});
+
+// ============================================================
+// 23. EXPOSE TO WINDOW
+// ============================================================
+window.showToast = showToast;
+window.toggleDropdown = toggleDropdown;
+window.togglePass = togglePass;
+window.loadNotifications = loadNotifications;
+window.deleteNotif = deleteNotif;
+window.clearAllNotifs = clearAllNotifs;
+window.openForgotModal = openForgotModal;
+window.closeForgotModal = closeForgotModal;
+window.fpSubmitCaptcha = fpSubmitCaptcha;
+window.fpSubmitEmail = fpSubmitEmail;
+window.fpSubmitReset = fpSubmitReset;
+window.serverAction = serverAction;
+window.startLogStream = startLogStream;
+window.clearLogs = clearLogs;
+window.copyServerUrl = copyServerUrl;
+window.deleteServer = deleteServer;
+window.quickCommand = quickCommand;
+window.sendTerminalCommand = sendTerminalCommand;
+window.clearTerminal = clearTerminal;
+window.openRenewModal = openRenewModal;
+window.closeRenewModal = closeRenewModal;
+window.updateRenewButton = updateRenewButton;
+window.continueRenew = continueRenew;
+window.copyUpiId = copyUpiId;
+window.copyText = copyText;
+window.selectPayMethod = selectPayMethod;
+window.openUpiApp = openUpiApp;
+window.submitTransactionId = submitTransactionId;
+window.uploadFile = uploadFile;
+window.promptFolder = promptFolder;
+window.promptFile = promptFile;
+window.openEditor = openEditor;
+window.saveEditor = saveEditor;
+window.deleteItem = deleteItem;
+window.renameItem = renameItem;
+window.unzipItem = unzipItem;
+window.openEditUser = openEditUser;
+window.togglePermBlock = togglePermBlock;
+window.closeEditUser = closeEditUser;
+window.previewLogo = previewLogo;
+window.handleLogoPreview = handleLogoPreview;
+window.previewAvatar = previewAvatar;
+window.toggleNewPkg = toggleNewPkg;
+window.pickTarget = pickTarget;
+window.detectUpiApp = detectUpiApp;
+window.onUpiInput = onUpiInput;
